@@ -14,10 +14,35 @@ if not ctypes.windll.shell32.IsUserAnAdmin():
         None, "runas", sys.executable, __file__, None, 1)
 
 
+# Check if the user is connected to the internet
+def check_internet():
+    try:
+        requests.get('http://google.com')
+        return True
+    except requests.ConnectionError:
+        return False
+
+# Check ping Time to Google on Windows
+def ping_google():
+    ping = os.system('ping -n 1 google.com > nul')
+    return str(ping)
+
+
+
+if check_internet() == False:
+    print('Please check your internet connection and try again.')
+    input('Press Enter to exit...')
+    sys.exit()
+
+# if the users Ping is greater than 600ms tell them they have a bad connection
+if int(ping_google()) > 600:
+    print('Your internet connection is slow (Ping is greater than 600ms).')
+
 ipinfo = requests.get('http://ipinfo.io/json')
 ipinfo.raise_for_status()
 
 ipinfo = json.loads(ipinfo.text)
+
 
 print('City: ' + ipinfo['city'])
 print('Country: ' + ipinfo['country'])
@@ -28,14 +53,17 @@ print('Postal: ' + ipinfo['postal'])
 print('Hostname: ' + ipinfo['hostname'])
 print('Operating System:' + ipinfo['org'])
 print('IP: ' + ipinfo['ip'])
+print('Ping: ' + ping_google() + 'ms')
 
 # Ask the user if they want to save the output to a file
 print('Do you want to save the output to a file? (y/n)')
+print('Note: The file will be saved to the C: drive.')
+print('Note: The Ping time is only available on Windows and will not be saved to the file.')
 response = input()
 if response.lower() == 'y':
     # open file in write mode
     # ask user for the file format they want to save the output as
-    print('What file format do you want to save the output as? (txt, json, xml, csv, html, pptx)')
+    print('What file format do you want to save the output as? (txt, json, xml, csv, html)')
     file_format = input()
     if file_format.lower() == 'txt':
         with open('C:\\ip-info.txt', 'w') as f:
@@ -128,51 +156,17 @@ if response.lower() == 'y':
                 os.startfile('C:\\ip-info.html')
             input('Press Enter to exit...')
 
-    elif file_format.Lower() == 'pptx':
-        prs = Presentation()
-        blank_slide_layout = prs.slide_layouts[6]
-        slide = prs.slides.add_slide(blank_slide_layout)
-        left = top = width = height = Inches(1)
-        txBox = slide.shapes.add_textbox(left, top, width, height)
-        tf = txBox.text_frame
-        p = tf.add_paragraph()
-        p.text = 'IP Info'
-        p.font.bold = True
-        p.font.size = Pt(20)
-        p = tf.add_paragraph()
-        p.text = 'City: ' + ipinfo['city']
-        p = tf.add_paragraph()
-        p.text = 'Country: ' + ipinfo['country']
-        p = tf.add_paragraph()
-        p.text = 'Location: ' + ipinfo['loc']
-        p = tf.add_paragraph()
-        p.text = 'Region: ' + ipinfo['region']
-        p = tf.add_paragraph()
-        p.text = 'Time Zone: ' + ipinfo['timezone']
-        p = tf.add_paragraph()
-        p.text = 'Postal: ' + ipinfo['postal']
-        p = tf.add_paragraph()
-        p.text = 'Hostname: ' + ipinfo['hostname']
-        p = tf.add_paragraph()
-        p.text = 'Operating System: ' + ipinfo['org']
-        p = tf.add_paragraph()
-        p.text = 'IP: ' + ipinfo['ip']
-        # Save the presentation to C: folder
-        prs.save('C:\\ip-info.pptx')
-        print('Output saved to ip-info.pptx in C: folder.')
-        # Ask the user if he wants to open the file
-        print('Do you want to open the file? (y/n)')
-        open_file = input()
-        if open_file.lower() == 'y':
-            os.startfile('C:\\ip-info.pptx')
-        input('Press Enter to exit...')
-            
-
 
     else:
         print('Invalid file format.')
         input('Press Enter to exit...')
 
+
 if response.lower() == 'n':
     print('Output was not saved.')
     input('Press Enter to exit...')
+
+else:
+    print('Invalid response.')
+    input('Press Enter to exit...')
+
